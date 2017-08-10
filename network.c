@@ -25,6 +25,10 @@ int listen_socket(char *port)
 			close(sock);
 			continue;
 		}
+		if (listen(sock, MAX_BACKLOG) < 0) {
+			close(sock);
+			continue;
+		}
 		freeaddrinfo(res);
 		return sock;
 	}

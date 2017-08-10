@@ -4,6 +4,7 @@
 
 static void myprintf(int val);
 static void die(const char *s);
+static void server_main(int server,char *docroot);
 
 static int debug_mode = 0;
 
@@ -23,10 +24,34 @@ void install_signal_handlers()
 
 void service(FILE *in, FILE *out, char* str)
 {
+  char a[1024];
+  while (fscanf(in, "%s", a) != EOF){
+    printf("%s\n",a);
+  }
 }
 
-void server_main(int server,char *docroot)
+static void server_main(int server, char *docroot)
 {
+  for (;;) {
+		struct sockaddr addr;
+		socklen_t addrlen = sizeof addr;
+		int sock;
+		int pid;
+
+		sock = accept(server, (struct sockaddr *)&addr, &addrlen);
+		myprintf(sock);
+		if (sock < 0) log_exit("accept(2) failed: %s", strerror(errno));
+		pid = fork();
+		if (pid < 0) exit(3);
+		if (pid == 0) {
+			FILE *inf = fdopen(sock, "r");
+			FILE *outf = fdopen(sock, "w");
+
+			service(inf, outf, docroot);
+			exit(0);
+		}
+		close(sock);
+	}
 }
 
 static void become_daemon(void)
