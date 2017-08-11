@@ -13,5 +13,6 @@ $(PROGRAM): $(OBJS)
 .c.o:
 		$(CC) $(CFLAGS) -c $<
 
+.PHONY
 clean:
 		rm -f *.o *~ $(PROGRAM)

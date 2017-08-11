@@ -18,12 +18,14 @@ static struct option longopts[] = {
 	{0, 0, 0, 0}
 };
 
-void install_signal_handlers()
+void service(FILE *in, FILE *out, char *docroot)
 {
-}
+	struct HTTPRequest *req;
 
-void service(FILE *in, FILE *out, char* str)
-{
+	req = read_request(in);
+	respond_to(req, out, docroot);
+	free_request(req);
+
   char a[1024];
   while (fscanf(in, "%s", a) != EOF){
     printf("%s\n",a);
@@ -142,4 +144,3 @@ int main(int argc, char *argv[])
 	fprintf(stdout, "%d", debug_mode);
   exit(0);
 }
-
