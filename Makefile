@@ -1,6 +1,6 @@
 CC            = gcc
 CFLAGS        = -Wall -g
-OBJS          = main.o log.o network.o signal.o memory.o
+OBJS          = main.o log.o network.o signal.o memory.o lib.o http.o
 PROGRAM       = main
 
 .SUFFIXES: .o .c

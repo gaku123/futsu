@@ -8,7 +8,8 @@ struct HTTPRequest* read_request(FILE *in)
 	req = (struct HTTPRequest *)xmalloc(sizeof(struct HTTPRequest));
 	read_request_line(req, in);
 	req->header = NULL;
-	while (h = read_header_field(in)) {
+	
+	while ((h = read_header_field(in)) != NULL) {
 		h->next = req->header;
 		req->header = h;
 	}
@@ -100,15 +101,15 @@ long content_length(struct HTTPRequest *req)
 	len = atol(val);
 	if (len < 0) {
 		log_exit("negative Content-Length value");
-		return len;
 	}
+  return len;
 }
 
 char *lookup_header_field_value(struct HTTPRequest *req, char *name)
 {
   struct HTTPHeaderField *h;
 
-  for (h = req->header; h; h->next) {
+  for (h = req->header; h != NULL; h = h->next) {
     if (strcasecmp(h->name, name) == 0) {
       return h->value;
     }
@@ -133,3 +134,90 @@ void free_request(struct HTTPRequest *req)
 	free(req->body);
 	free(req);
 }
+
+void respond_to(struct HTTPRequest *req, FILE *out, char *docroot)
+{
+	if (strcmp(req->method, "GET") == 0) {
+		do_file_response(req, out, docroot);
+	} else if (strcmp(req->method, "HEAD") == 0) {
+		do_file_response(req, out, docroot);
+	} else if (strcmp(req->method, "POST") == 0) {
+		method_not_allowd(req, out);
+	} else {
+		not_implemented(req, out);
+	}
+}
+
+void do_file_response(struct HTTPRequest *req, FILE *out, char *docroot)
+{
+	struct FileInfo *info;
+
+	info = get_fileinfo(docroot, req->path);
+	if (!info->ok) {
+		free_fileinfo(info);
+		not_found(req, out);
+		return;
+	}
+	output_common_header_fields(req, out, "200 OK");
+	fprintf(out, "Content-Length: %ld\r\n", info->size);
+	fprintf(out, "Content-Type: %s\r\n", guess_content_type(info));
+	fprintf(out, "\r\n");
+	if (strcmp(req->method, "HEAD") != 0) {
+		int fd;
+		char buf[BLOCK_BUF_SIZE];
+		ssize_t n;
+
+		fd = open(info->path, O_RDONLY);
+		if (fd < 0) {
+			log_exit("faild to open %s: %s", info->path, strerror(errno));
+		}
+		for (;;) {
+			n = read(fd, buf, BLOCK_BUF_SIZE);
+			if (n < 0) {
+				log_exit("failed to read %s: %s", info->path, strerror(errno));
+			}
+			if (n == 0) {
+				break;
+			}
+			if (fwrite(buf, 1, n, out) < n) {
+				log_exit("failed to write to socket: %s :n %d", strerror(errno), n);
+			}
+		}
+		close(fd);
+	}
+	fflush(out);
+	free_fileinfo(info);
+}
+
+void not_found(struct HTTPRequest *req, FILE *out)
+{
+}
+
+void method_not_allowd(struct HTTPRequest *req, FILE *out)
+{
+}
+
+void not_implemented(struct HTTPRequest *req, FILE *out)
+{
+}
+
+void output_common_header_fields(struct HTTPRequest *req, FILE *out, char *status)
+{
+	time_t t;
+	struct tm *tm;
+	char buf[TIME_BUF_SIZE];
+
+	t = time(NULL);
+	tm = gmtime(&t);
+	if (!tm) {
+		log_exit("gmtime() failed: %s", strerror(errno));
+	}
+	strftime(buf, TIME_BUF_SIZE, "%a, %d %b %Y %H:%M:%S GMT", tm);
+	fprintf(out, "HTTP/1.%d %s\r\n", HTTP_MINOR_VERSION, status);
+	fprintf(out, "Date: %s\r\n", buf);
+	fprintf(out, "Server: %s/%s\r\n", SERVER_NAME, SERVER_VERSION);
+	fprintf(out, "Connection: close\r\n");
+}
+
+
+

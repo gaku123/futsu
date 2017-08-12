@@ -1,6 +1,6 @@
 #include "main.h"
 
-#define USAGE "Usage: %s [--port=n] [--chroot --user-u --group=g] [--debug] <docroot>\n"
+#define USAGE "Usage: %s [--port=n] [--chroot --user=u --group=g] [--debug] <docroot>\n"
 
 static void myprintf(int val);
 static void die(const char *s);

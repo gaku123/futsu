@@ -28,6 +28,12 @@ struct FileInfo* get_fileinfo(char *docroot, char *urlpath)
   return info;
 }
 
+void free_fileinfo(struct FileInfo *info)
+{
+	free(info->path);
+	free(info);
+}
+
 char *build_fspath(char *docroot, char *urlpath)
 {
   char *path;
@@ -35,4 +41,9 @@ char *build_fspath(char *docroot, char *urlpath)
   path = (char *)xmalloc(strlen(docroot) + 1 + strlen(urlpath) + 1);
   sprintf(path, "%s/%s", docroot, urlpath);
   return path;
+}
+
+char *guess_content_type(struct FileInfo *info)
+{
+	return "text/plain";
 }
