@@ -2,8 +2,6 @@
 
 #define USAGE "Usage: %s [--port=n] [--chroot --user=u --group=g] [--debug] <docroot>\n"
 
-static void myprintf(int val);
-static void die(const char *s);
 static void server_main(int server,char *docroot);
 
 static int debug_mode = 0;
@@ -41,7 +39,6 @@ static void server_main(int server, char *docroot)
 		int pid;
 
 		sock = accept(server, (struct sockaddr *)&addr, &addrlen);
-		myprintf(sock);
 		if (sock < 0) log_exit("accept(2) failed: %s", strerror(errno));
 		pid = fork();
 		if (pid < 0) exit(3);
@@ -71,26 +68,6 @@ static void become_daemon(void)
 	if (n < 0) log_exit("fork(2) failed: %s", strerror(errno));
 	if (n != 0) _exit(0);
 	if ((sid = setsid()) < 0) log_exit("setsid(2) failed: %s", strerror(errno));
-	myprintf(sid);
-}
-
-static void myprintf(int val)
-{
-	int fd;
-	char buf[2048];
-	size_t n = sprintf(buf, "val : %d", val);
-	char *path = "/tmp/res";
-
-	fd = open(path, O_RDWR | O_CREAT, 0644);
-	if (fd < 0) die(path);
-	if (write(fd, buf, n) < 0) die(path);
-	if (close(fd) < 0) die(path);
-}
-
-static void die(const char *s)
-{
-	perror(s);
-	exit(1);
 }
 
 int main(int argc, char *argv[])
