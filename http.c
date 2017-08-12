@@ -5,7 +5,7 @@ struct HTTPRequest* read_request(FILE *in)
 	struct HTTPRequest *req;
 	struct HTTPHeaderField *h;
 
-	req = xmalloc(sizeof(struct HTTPRequest));
+	req = (struct HTTPRequest *)xmalloc(sizeof(struct HTTPRequest));
 	read_request_line(req, in);
 	req->header = NULL;
 	while (h = read_header_field(in)) {
@@ -17,8 +17,8 @@ struct HTTPRequest* read_request(FILE *in)
 		if (req->length > MAX_REQUEST_BODY_LENGTH) {
 			log_exit("request body too long");
 		}
-		req=>body = xmalloc(req->length);
-		if 8fread(req->body, req->length, 1, in) < 1) {
+		req->body = xmalloc(req->length);
+		if (fread(req->body, req->length, 1, in) < 1) {
 			log_exit("failed to read request body");
 		}
 	} else {
@@ -27,10 +27,10 @@ struct HTTPRequest* read_request(FILE *in)
 	return req;
 }
 
-voiid read_request_line(struct HTTPRequest *req, FILE *in)
+void read_request_line(struct HTTPRequest *req, FILE *in)
 {
 	char buf[LINE_BUF_SIZE];
-	char *path, :p;
+	char *path, *p;
 
 	if (!fgets(buf, LINE_BUF_SIZE, in)) {
 		log_exit("no request line");
@@ -95,13 +95,25 @@ long content_length(struct HTTPRequest *req)
 	char *val;
 	long len;
 
-	val = lookup_header_field_value(req "Content-Length");
+	val = lookup_header_field_value(req, "Content-Length");
 	if (!val) return 0;
 	len = atol(val);
 	if (len < 0) {
 		log_exit("negative Content-Length value");
 		return len;
 	}
+}
+
+char *lookup_header_field_value(struct HTTPRequest *req, char *name)
+{
+  struct HTTPHeaderField *h;
+
+  for (h = req->header; h; h->next) {
+    if (strcasecmp(h->name, name) == 0) {
+      return h->value;
+    }
+  }
+  return NULL;
 }
 
 void free_request(struct HTTPRequest *req)
@@ -111,7 +123,7 @@ void free_request(struct HTTPRequest *req)
 	head = req->header;
 	while (head) {
 		h = head;
-		head = hed->next;
+		head = head->next;
 		free(h->name);
 		free(h->value);
 		free(h);

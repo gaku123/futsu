@@ -20,15 +20,9 @@ static struct option longopts[] = {
 
 void service(FILE *in, FILE *out, char *docroot)
 {
-	struct HTTPRequest *req;
-
-	req = read_request(in);
-	respond_to(req, out, docroot);
-	free_request(req);
-
-  char a[1024];
-  while (fscanf(in, "%s", a) != EOF){
-    printf("%s\n",a);
+  char str[1024];
+  while (fgets(str, 1024, in) != NULL){
+    printf("%s",str);
   }
 }
 

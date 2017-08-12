@@ -1,6 +1,6 @@
 CC            = gcc
-CFLAGS        = -Wall
-OBJS          = main.o log.o network.o
+CFLAGS        = -Wall -g
+OBJS          = main.o log.o network.o signal.o memory.o
 PROGRAM       = main
 
 .SUFFIXES: .o .c
@@ -13,6 +13,5 @@ $(PROGRAM): $(OBJS)
 .c.o:
 		$(CC) $(CFLAGS) -c $<
 
-.PHONY
 clean:
 		rm -f *.o *~ $(PROGRAM)
